@@ -40,15 +40,19 @@ export default function PostDetailClient({ post, comments: initComments, current
     setVoteLoading(true)
     try {
       if (!wasVoted) {
-        await supabase.from('votes').upsert(
-          { post_id: post.id, user_id: currentUserId, value: 1 },
-          { onConflict: 'post_id,user_id' }
-        )
+        const { error } = await supabase
+          .from('votes')
+          .insert({ user_id: currentUserId, post_id: post.id, value: 1 })
+        if (error && error.code === '23505') {
+          await supabase.from('votes').update({ value: 1 })
+            .match({ user_id: currentUserId, post_id: post.id })
+        }
       } else {
-        await supabase.from('votes').delete().match({ post_id: post.id, user_id: currentUserId })
+        await supabase.from('votes').delete()
+          .match({ user_id: currentUserId, post_id: post.id })
       }
       const { data } = await supabase.from('posts').select('upvotes_count').eq('id', post.id).single()
-      if (data) setVotes(Math.max(0, data.upvotes_count))
+      if (data != null) setVotes(Math.max(0, data.upvotes_count))
     } catch {
       setVoted(wasVoted)
       setVotes(prevCount)
