@@ -17,14 +17,26 @@ export default function Sidebar({ trendingBooks = [], unread: initUnread = 0 }: 
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) return
-      supabase.from('profiles').select('username').eq('id', data.user.id).single()
-        .then(({ data: p }) => { if (p?.username) setUsername(p.username) })
+    // Use getSession() - reads from cookie without network call
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) return
+      const uid = session.user.id
+      // Fetch profile
+      supabase.from('profiles').select('username').eq('id', uid).single()
+        .then(({ data }) => { if (data?.username) setUsername(data.username) })
+      // Fetch unread count
       supabase.from('notifications').select('id', { count: 'exact', head: true })
-        .eq('recipient_id', data.user.id).eq('is_read', false)
+        .eq('recipient_id', uid).eq('is_read', false)
         .then(({ count }) => setUnread(count ?? 0))
     })
+    // Also listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session?.user) { setUsername(null); return }
+      const uid = session.user.id
+      supabase.from('profiles').select('username').eq('id', uid).single()
+        .then(({ data }) => { if (data?.username) setUsername(data.username) })
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   return (
@@ -66,7 +78,7 @@ export default function Sidebar({ trendingBooks = [], unread: initUnread = 0 }: 
           {trendingBooks.slice(0, 5).map(b => (
             <Link key={b.id} href={`/book/${b.id}`} className="nav-item" style={{ fontSize: 12 }}>
               <span style={{ fontSize: 10 }}>▪</span>
-              <span style={{ lineHeight: 1.3 }}>{b.title?.length > 22 ? b.title.slice(0, 22) + '…' : b.title}</span>
+              <span>{b.title?.length > 22 ? b.title.slice(0, 22) + '…' : b.title}</span>
             </Link>
           ))}
         </div>
