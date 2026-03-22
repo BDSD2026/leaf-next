@@ -71,7 +71,7 @@ export default function SettingsInner() {
 
   const signOut = async () => {
     await supabase.auth.signOut()
-    router.push('/')
+    router.push('/auth/login')
   }
 
   const deleteAccount = async () => {
@@ -82,7 +82,7 @@ export default function SettingsInner() {
     await supabase.from('shelves').delete().eq('user_id', user.id)
     await supabase.from('follows').delete().eq('follower_id', user.id)
     await supabase.auth.signOut()
-    router.push('/')
+    router.push('/auth/login')
   }
 
   const TABS: { id: Tab; label: string }[] = [
