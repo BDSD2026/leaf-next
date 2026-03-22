@@ -86,10 +86,17 @@ function CreatePostInner() {
   const cfg = TYPE_CONFIG[type]
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) router.push('/auth/login')
-      else setUser(data.user)
+    // getSession() reads from cookie without network call - reliable on all clients
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) router.push('/auth/login')
+      else setUser(session.user)
     })
+    // Also react to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      if (!session?.user) router.push('/auth/login')
+      else setUser(session.user)
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   // Pre-select book if coming from book page (handles both UUID and google_id)
