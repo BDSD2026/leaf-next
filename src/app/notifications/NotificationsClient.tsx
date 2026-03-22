@@ -1,5 +1,5 @@
-import PageLayout from '@/components/PageLayout'
 'use client'
+import PageLayout from '@/components/PageLayout'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Avatar from '@/components/Avatar'
