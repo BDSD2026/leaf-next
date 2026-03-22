@@ -7,15 +7,13 @@ export default async function ShelfPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) {
-    return <ShelfClient shelf={[]} userId="" />
-  }
+  const { data: trendingBooks } = await supabase.from('books').select('id,title,author,insights_count').order('insights_count', { ascending: false }).limit(5)
 
-  const { data: shelf } = await supabase
-    .from('shelves')
+  if (!user) return <ShelfClient shelf={[]} userId="" trendingBooks={trendingBooks || []} />
+
+  const { data: shelf } = await supabase.from('shelves')
     .select('*, book:books(id,title,author,cover_url,genre,google_id)')
-    .eq('user_id', user.id)
-    .order('updated_at', { ascending: false })
+    .eq('user_id', user.id).order('updated_at', { ascending: false })
 
-  return <ShelfClient shelf={shelf || []} userId={user.id} />
+  return <ShelfClient shelf={shelf || []} userId={user.id} trendingBooks={trendingBooks || []} />
 }
