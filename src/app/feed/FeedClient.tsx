@@ -20,12 +20,38 @@ interface Props {
   filter: string
 }
 
+function ActiveReaders() {
+  const [readers, setReaders] = useState<any[]>([])
+  const supabase = createClient()
+  useEffect(() => {
+    supabase.from('profiles').select('id,username,name,color,avatar_url')
+      .order('created_at', { ascending: false }).limit(5)
+      .then(({ data }) => setReaders(data || []))
+  }, [])
+  return (
+    <div style={{ background: 'var(--s1)', border: '1px solid var(--b1)', borderRadius: 12, overflow: 'hidden' }}>
+      {readers.length === 0 && (
+        <div style={{ padding: 14, fontSize: 12, color: 'var(--t3)', textAlign: 'center' }}>No readers yet</div>
+      )}
+      {readers.map((u, i) => (
+        <Link key={u.id} href={`/profile/${u.username}`}
+          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', borderBottom: i < readers.length - 1 ? '1px solid var(--b1)' : 'none', textDecoration: 'none' }}>
+          <Avatar name={u.name || u.username} color={u.color} avatarUrl={u.avatar_url} size={26} />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t1)' }}>{u.name || u.username}</div>
+            <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>@{u.username}</div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
 export default function FeedClient({ initialPosts, trendingBooks, currentUserId, profile, unread = 0, sort, filter }: Props) {
   const router = useRouter()
   const [posts, setPosts] = useState(initialPosts)
   const supabase = createClient()
 
-  // Real-time new posts
   useEffect(() => {
     const channel = supabase
       .channel('feed')
@@ -51,7 +77,6 @@ export default function FeedClient({ initialPosts, trendingBooks, currentUserId,
 
         <main className="main-content">
           <div style={{ padding: '18px 20px' }}>
-            {/* Filter + sort */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
               <div style={{ display: 'flex', gap: 4, flex: 1, flexWrap: 'wrap' }}>
                 {FILTERS.map(([k, l]) => (
@@ -75,17 +100,23 @@ export default function FeedClient({ initialPosts, trendingBooks, currentUserId,
               <div className="empty">
                 <div className="empty-icon">📖</div>
                 <div className="empty-text">No posts yet. Be the first to share an insight!</div>
-                {currentUserId && <Link href="/post/create" className="btn-primary" style={{ marginTop: 16, display: 'inline-block' }}>+ Create Post</Link>}
+                {currentUserId && (
+                  <Link href="/post/create" className="btn-primary" style={{ marginTop: 16, display: 'inline-block', textDecoration: 'none' }}>
+                    + Create Post
+                  </Link>
+                )}
               </div>
             ) : posts.map(p => <PostCard key={p.id} post={p} currentUserId={currentUserId} />)}
           </div>
         </main>
 
-        {/* Right sidebar */}
         <aside className="sidebar-right">
           <div style={{ marginBottom: 20 }}>
             <div className="sidebar-heading">Trending Books</div>
             <div style={{ background: 'var(--s1)', border: '1px solid var(--b1)', borderRadius: 12, overflow: 'hidden' }}>
+              {trendingBooks.length === 0 && (
+                <div style={{ padding: '14px', fontSize: 12, color: 'var(--t3)', textAlign: 'center' }}>No books yet</div>
+              )}
               {trendingBooks.map((b, i) => (
                 <Link key={b.id} href={`/book/${b.id}`}
                   style={{ display: 'flex', gap: 10, padding: '10px 14px', borderBottom: i < trendingBooks.length - 1 ? '1px solid var(--b1)' : 'none', textDecoration: 'none' }}>
@@ -96,7 +127,6 @@ export default function FeedClient({ initialPosts, trendingBooks, currentUserId,
                   </div>
                 </Link>
               ))}
-              {trendingBooks.length === 0 && <div style={{ padding: '14px', fontSize: 12, color: 'var(--t3)', textAlign: 'center' }}>No books yet</div>}
             </div>
           </div>
 
@@ -109,27 +139,3 @@ export default function FeedClient({ initialPosts, trendingBooks, currentUserId,
     </div>
   )
 }
-
-function ActiveReaders() {
-  const [readers, setReaders] = useState<any[]>([])
-  const supabase = createClient()
-  useEffect(() => {
-    supabase.from('profiles').select('id,username,name,color,avatar_url')
-      .order('created_at', { ascending: false }).limit(5)
-      .then(({ data }) => setReaders(data || []))
-  }, [])
-  return (
-    <div style={{ background: 'var(--s1)', border: '1px solid var(--b1)', borderRadius: 12, overflow: 'hidden' }}>
-      {readers.length === 0 && <div style={{ padding: 14, fontSize: 12, color: 'var(--t3)', textAlign: 'center' }}>No readers yet</div>}
-      {readers.map((u, i) => (
-        <Link key={u.id} href={`/profile/${u.username}`}
-          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', borderBottom: i < readers.length - 1 ? '1px solid var(--b1)' : 'none', textDecoration: 'none' }}>
-          <Avatar name={u.name || u.username} color={u.color} avatarUrl={u.avatar_url} size={26} />
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t1)' }}>{u.name || u.username}</div>
-            <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>@{u.username}</div>
-          </div>
-        </Link>
-      ))}
-    </div>
-  )
