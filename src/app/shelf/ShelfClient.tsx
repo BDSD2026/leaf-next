@@ -1,5 +1,5 @@
-import PageLayout from '@/components/PageLayout'
 'use client'
+import PageLayout from '@/components/PageLayout'
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
