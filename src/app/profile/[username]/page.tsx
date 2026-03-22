@@ -8,7 +8,10 @@ export default async function ProfilePage({ params }: { params: { username: stri
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: profile } = await supabase.from('profiles').select('*').eq('username', params.username).single()
+  const [{ data: profile }, { data: trendingBooks }] = await Promise.all([
+    supabase.from('profiles').select('*').eq('username', params.username).single(),
+    supabase.from('books').select('id,title,author,insights_count').order('insights_count', { ascending: false }).limit(5),
+  ])
   if (!profile) return notFound()
 
   const [{ data: posts }, { data: shelf }] = await Promise.all([
@@ -26,5 +29,5 @@ export default async function ProfilePage({ params }: { params: { username: stri
     myProfile = mp
   }
 
-  return <ProfileClient profile={profile} posts={posts || []} shelf={shelf || []} isFollowing={isFollowing} currentUserId={user?.id} myProfile={myProfile} isMe={user?.id === profile.id} />
+  return <ProfileClient profile={profile} posts={posts || []} shelf={shelf || []} isFollowing={isFollowing} currentUserId={user?.id} myProfile={myProfile} isMe={user?.id === profile.id} trendingBooks={trendingBooks || []} />
 }
