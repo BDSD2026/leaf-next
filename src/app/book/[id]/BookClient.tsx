@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import PageLayout from '@/components/PageLayout'
 import PostCard from '@/components/PostCard'
 
 function stripHtml(html: string): string {
@@ -38,7 +39,7 @@ function Stars({ value }: { value: number }) {
   )
 }
 
-export default function BookClient({ book, posts, shelfEntry: initShelf, currentUserId, profile }: any) {
+export default function BookClient({ book, posts, shelfEntry: initShelf, currentUserId, profile, trendingBooks = [] }: any) {
   const router = useRouter()
   const supabase = createClient()
   const [shelf, setShelf] = useState(initShelf)
@@ -73,7 +74,8 @@ export default function BookClient({ book, posts, shelfEntry: initShelf, current
   const currentShelfOption = SHELF_OPTIONS.find(o => o.value === shelf?.status)
 
   return (
-    <div style={{ maxWidth: 760, margin: '0 auto', padding: '24px 20px' }}>
+    <PageLayout trendingBooks={trendingBooks}>
+    <div style={{ padding: '24px 20px' }}>
       <button onClick={() => router.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--t3)', marginBottom: 16, padding: 0 }}>‹ Back</button>
 
       {/* Book header */}
@@ -186,5 +188,6 @@ export default function BookClient({ book, posts, shelfEntry: initShelf, current
 
       {toast && <div className="toast">{toast}</div>}
     </div>
+    </PageLayout>
   )
 }
