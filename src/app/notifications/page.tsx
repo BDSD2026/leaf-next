@@ -7,7 +7,7 @@ export default async function NotificationsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: trendingBooks } = await supabase.from('books').select('id,title,author,insights_count').order('insights_count', { ascending: false }).limit(5)
+  const { data: trendingBooks } = await supabase.from('books').select('id,title,author,insights_count').gt('insights_count', 0).order('insights_count', { ascending: false }).limit(5)
 
   if (!user) return <NotificationsClient notifs={[]} userId="" trendingBooks={trendingBooks || []} />
 
