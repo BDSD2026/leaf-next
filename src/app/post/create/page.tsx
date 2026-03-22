@@ -174,6 +174,20 @@ function CreatePostInner() {
     if (type === 'review' && rating === 0) { setError('Please add a star rating for your review.'); return }
     setSubmitting(true); setError('')
 
+    // Ensure profile exists — in case signup trigger didn't fire
+    const { data: existingProfile } = await supabase
+      .from('profiles').select('id').eq('id', user.id).maybeSingle()
+    if (!existingProfile) {
+      const email = user.email || ''
+      const baseUsername = email.split('@')[0].replace(/[^a-z0-9._]/gi, '').toLowerCase() || 'user'
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        username: baseUsername + '_' + user.id.slice(0, 6),
+        name: user.user_metadata?.name || baseUsername,
+        color: '#7C6FCD',
+      }, { onConflict: 'id', ignoreDuplicates: true })
+    }
+
     let bookId = null
     if (selectedBook) bookId = await upsertBook(selectedBook)
 
