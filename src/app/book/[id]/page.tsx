@@ -8,7 +8,6 @@ export default async function BookPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Try UUID first, then google_id
   let book = null
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.id)
 
@@ -16,12 +15,10 @@ export default async function BookPage({ params }: { params: { id: string } }) {
     const { data } = await supabase.from('books').select('*').eq('id', params.id).single()
     book = data
   } else {
-    // Try google_id lookup
     const { data } = await supabase.from('books').select('*').eq('google_id', params.id).maybeSingle()
     if (data) {
       book = data
     } else {
-      // Fetch from Google Books API and upsert
       try {
         const res = await fetch(`https://www.googleapis.com/books/v1/volumes/${params.id}`)
         if (res.ok) {
@@ -50,20 +47,16 @@ export default async function BookPage({ params }: { params: { id: string } }) {
 
   if (!book) return notFound()
 
-  const { data: posts } = await supabase
-    .from('posts_with_details').select('*')
-    .eq('book_id', book.id).eq('is_deleted', false)
-    .order('created_at', { ascending: false })
+  const [{ data: posts }, { data: trendingBooks }] = await Promise.all([
+    supabase.from('posts_with_details').select('*').eq('book_id', book.id).eq('is_deleted', false).order('created_at', { ascending: false }),
+    supabase.from('books').select('id,title,author,insights_count').order('insights_count', { ascending: false }).limit(5),
+  ])
 
-  let shelfEntry = null
-  let userVotes: Record<string, number> = {}
-  let profile = null
-
+  let shelfEntry = null, userVotes: Record<string, number> = {}, profile = null
   if (user) {
     const [{ data: shelf }, { data: votes }, { data: p }] = await Promise.all([
       supabase.from('shelves').select('*').eq('user_id', user.id).eq('book_id', book.id).maybeSingle(),
-      supabase.from('votes').select('post_id,value').eq('user_id', user.id)
-        .in('post_id', (posts || []).map(p => p.id)),
+      supabase.from('votes').select('post_id,value').eq('user_id', user.id).in('post_id', (posts||[]).map(p => p.id)),
       supabase.from('profiles').select('*').eq('id', user.id).single(),
     ])
     shelfEntry = shelf
@@ -71,7 +64,6 @@ export default async function BookPage({ params }: { params: { id: string } }) {
     profile = p
   }
 
-  const postsWithVotes = (posts || []).map(p => ({ ...p, user_vote: userVotes[p.id] ?? 0 }))
-
-  return <BookClient book={book} posts={postsWithVotes} shelfEntry={shelfEntry} currentUserId={user?.id} profile={profile} />
+  const postsWithVotes = (posts||[]).map(p => ({ ...p, user_vote: userVotes[p.id] ?? 0 }))
+  return <BookClient book={book} posts={postsWithVotes} shelfEntry={shelfEntry} currentUserId={user?.id} profile={profile} trendingBooks={trendingBooks || []} />
 }
