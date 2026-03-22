@@ -15,9 +15,22 @@ function RightSidebar({ trendingBooks }: { trendingBooks: any[] }) {
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.from('profiles').select('id,username,name,color,avatar_url')
-      .order('created_at', { ascending: false }).limit(5)
-      .then(({ data }) => setReaders(data || []))
+    supabase
+      .from('posts')
+      .select('user_id, profiles!posts_user_id_fkey(id,username,name,color,avatar_url)')
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        // Deduplicate by user_id, keep first occurrence (most recent poster)
+        const seen = new Set<string>()
+        const unique = (data || [])
+          .filter((p: any) => { if (!p.user_id || seen.has(p.user_id)) return false; seen.add(p.user_id); return true })
+          .slice(0, 5)
+          .map((p: any) => p.profiles)
+          .filter(Boolean)
+        setReaders(unique)
+      })
   }, [])
 
   return (
