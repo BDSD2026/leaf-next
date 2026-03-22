@@ -29,10 +29,8 @@ export default async function FeedPage({ searchParams }: { searchParams: { sort?
   }
 
   // Fetch sidebar data
-  const [{ data: trendingBooks }, { data: activeReaders }] = await Promise.all([
-    supabase.from('books').select('id,title,author,insights_count').order('insights_count', { ascending: false }).limit(5),
-    supabase.from('profiles').select('id,username,name,color,avatar_url').order('created_at', { ascending: false }).limit(5),
-  ])
+  const { data: trendingBooks } = await supabase
+    .from('books').select('id,title,author,insights_count').order('insights_count', { ascending: false }).limit(5)
 
   // Fetch user votes if logged in
   let userVotes: Record<string, number> = {}
@@ -63,7 +61,6 @@ export default async function FeedPage({ searchParams }: { searchParams: { sort?
     <FeedClient
       initialPosts={postsWithVotes}
       trendingBooks={trendingBooks || []}
-      activeReaders={activeReaders || []}
       currentUserId={user?.id}
       profile={profile}
       unread={unread}
