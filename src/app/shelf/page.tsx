@@ -7,9 +7,8 @@ export default async function ShelfPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Don't redirect on server - let client handle it
   if (!user) {
-    return <ShelfClient shelf={[]} currentUserId={undefined} />
+    return <ShelfClient shelf={[]} userId="" />
   }
 
   const { data: shelf } = await supabase
@@ -18,5 +17,5 @@ export default async function ShelfPage() {
     .eq('user_id', user.id)
     .order('updated_at', { ascending: false })
 
-  return <ShelfClient shelf={shelf || []} currentUserId={user.id} />
+  return <ShelfClient shelf={shelf || []} userId={user.id} />
 }
