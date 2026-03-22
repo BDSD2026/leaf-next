@@ -13,7 +13,6 @@ const SORTS = [['trending','Hot'],['new','New'],['top','Top']]
 interface Props {
   initialPosts: any[]
   trendingBooks: any[]
-  activeReaders: any[]
   currentUserId?: string
   profile?: any
   unread?: number
@@ -21,7 +20,7 @@ interface Props {
   filter: string
 }
 
-export default function FeedClient({ initialPosts, trendingBooks, activeReaders, currentUserId, profile, unread = 0, sort, filter }: Props) {
+export default function FeedClient({ initialPosts, trendingBooks, currentUserId, profile, unread = 0, sort, filter }: Props) {
   const router = useRouter()
   const [posts, setPosts] = useState(initialPosts)
   const supabase = createClient()
