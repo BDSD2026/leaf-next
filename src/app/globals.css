@@ -1,4 +1,5 @@
-:root {
+/* ── Dark theme (default) ── */
+:root, [data-theme="dark"] {
   --bg:     #0C0C0E;
   --s1:     #131315;
   --s2:     #1A1A1D;
@@ -17,6 +18,30 @@
   --ro:     #E06478;
   --ro-t:   rgba(224,100,120,0.13);
   --rd:     #E05C6A;
+  --nav-bg: rgba(12,12,14,0.92);
+}
+
+/* ── Light theme ── */
+[data-theme="light"] {
+  --bg:     #F7F6F2;
+  --s1:     #FFFFFF;
+  --s2:     #F0EFE9;
+  --s3:     #E4E2DA;
+  --b1:     #DDD9CF;
+  --b2:     #C8C4BA;
+  --t1:     #1A1916;
+  --t2:     #5A5852;
+  --t3:     #9A9890;
+  --gr:     #1A8A6A;
+  --gr-t:   rgba(26,138,106,0.1);
+  --bl:     #1A6AC8;
+  --bl-t:   rgba(26,106,200,0.1);
+  --am:     #C47010;
+  --am-t:   rgba(196,112,16,0.1);
+  --ro:     #B84058;
+  --ro-t:   rgba(184,64,88,0.1);
+  --rd:     #B83444;
+  --nav-bg: rgba(247,246,242,0.92);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -27,6 +52,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
   line-height: 1.5;
+  transition: background 0.2s, color 0.2s;
 }
 
 ::-webkit-scrollbar { width: 5px; }
@@ -62,7 +88,7 @@ input, textarea, select { font-family: inherit; }
   border-radius: 9px;
   border: none;
   background: var(--gr);
-  color: var(--bg);
+  color: #fff;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -141,7 +167,7 @@ input, textarea, select { font-family: inherit; }
   font-size: 13px;
   z-index: 500;
   white-space: nowrap;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
   animation: slideup 0.2s ease;
 }
 
@@ -150,11 +176,12 @@ input, textarea, select { font-family: inherit; }
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(12,12,14,0.9);
+  background: var(--nav-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--b1);
   height: 56px;
+  transition: background 0.2s;
 }
 .nav-inner {
   max-width: 1200px;
@@ -248,7 +275,7 @@ input, textarea, select { font-family: inherit; }
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
-  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
 }
 
 /* Avatar */
@@ -302,7 +329,7 @@ input, textarea, select { font-family: inherit; }
 
 @keyframes slideup {
   from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
 @keyframes spin {
