@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import PostCard from '@/components/PostCard'
+import PageLayout from '@/components/PageLayout'
 import Avatar from '@/components/Avatar'
 
 const SHELF_META: Record<string, { label: string; color: string }> = {
@@ -30,7 +31,7 @@ function MiniBook({ entry }: { entry: any }) {
   )
 }
 
-export default function ProfileClient({ profile, posts, shelf, isFollowing: initFollowing, currentUserId, myProfile, isMe }: any) {
+export default function ProfileClient({ profile, posts, shelf, isFollowing: initFollowing, currentUserId, myProfile, isMe, trendingBooks = [] }: any) {
   const router = useRouter()
   const supabase = createClient()
   const [following, setFollowing] = useState(initFollowing)
@@ -54,8 +55,8 @@ export default function ProfileClient({ profile, posts, shelf, isFollowing: init
   const booksRead = read.length
 
   return (
-    <div className="container">
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '0 20px 32px' }}>
+    <PageLayout trendingBooks={trendingBooks}>
+      <div style={{ padding: '0 20px 32px' }}>
 
         {/* Hero banner */}
         <div style={{ height: 80, background: `linear-gradient(135deg, ${profile.color}33 0%, ${profile.color}11 100%)`, margin: '0 -20px', marginBottom: 0 }} />
@@ -202,6 +203,6 @@ export default function ProfileClient({ profile, posts, shelf, isFollowing: init
           </div>
         )}
       </div>
-    </div>
+    </PageLayout>
   )
 }
