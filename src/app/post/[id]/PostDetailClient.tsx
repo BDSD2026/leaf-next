@@ -22,8 +22,9 @@ const ago = (ts: string) => {
 export default function PostDetailClient({ post, comments: initComments, currentUserId, profile, trendingBooks = [] }: any) {
   const router = useRouter()
   const supabase = createClient()
-  const [votes, setVotes] = useState(post.upvotes_count ?? 0)
+  const [votes, setVotes] = useState(Math.max(0, post.upvotes_count ?? 0))
   const [voted, setVoted] = useState(post.user_vote === 1)
+  const [voteLoading, setVoteLoading] = useState(false)
   const [comments, setComments] = useState(initComments)
   const [txt, setTxt] = useState('')
   const [posting, setPosting] = useState(false)
@@ -31,9 +32,29 @@ export default function PostDetailClient({ post, comments: initComments, current
 
   const handleVote = async () => {
     if (!currentUserId) { router.push('/auth/login'); return }
-    const nv = !voted; setVoted(nv); setVotes((v: number) => v + (nv ? 1 : -1))
-    if (nv) await supabase.from('votes').upsert({ post_id: post.id, user_id: currentUserId, value: 1 })
-    else await supabase.from('votes').delete().match({ post_id: post.id, user_id: currentUserId })
+    if (voteLoading) return
+    const wasVoted = voted
+    const prevCount = votes
+    setVoted(!wasVoted)
+    setVotes(wasVoted ? Math.max(0, prevCount - 1) : prevCount + 1)
+    setVoteLoading(true)
+    try {
+      if (!wasVoted) {
+        await supabase.from('votes').upsert(
+          { post_id: post.id, user_id: currentUserId, value: 1 },
+          { onConflict: 'post_id,user_id' }
+        )
+      } else {
+        await supabase.from('votes').delete().match({ post_id: post.id, user_id: currentUserId })
+      }
+      const { data } = await supabase.from('posts').select('upvotes_count').eq('id', post.id).single()
+      if (data) setVotes(Math.max(0, data.upvotes_count))
+    } catch {
+      setVoted(wasVoted)
+      setVotes(prevCount)
+    } finally {
+      setVoteLoading(false)
+    }
   }
   const handleComment = async () => {
     if (!currentUserId || !txt.trim()) { if (!currentUserId) router.push('/auth/login'); return }
