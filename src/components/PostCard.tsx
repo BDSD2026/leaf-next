@@ -26,23 +26,54 @@ const ago = (ts: string) => {
 export default function PostCard({ post, currentUserId }: { post: any; currentUserId?: string }) {
   const router = useRouter()
   const supabase = createClient()
-  const [votes, setVotes] = useState(post.upvotes_count ?? 0)
+
+  // user_vote: 1 = upvoted, 0 = not voted
   const [voted, setVoted] = useState(post.user_vote === 1)
-  const type = TYPE_STYLES[post.type] || TYPE_STYLES.thought
+  const [voteCount, setVoteCount] = useState(Math.max(0, post.upvotes_count ?? 0))
+  const [voteLoading, setVoteLoading] = useState(false)
+  const [commentCount, setCommentCount] = useState(post.comments_count ?? 0)
 
   const handleVote = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     if (!currentUserId) { router.push('/auth/login'); return }
-    const newVoted = !voted
-    setVoted(newVoted)
-    setVotes((v: number) => v + (newVoted ? 1 : -1))
-    if (newVoted) {
-      await supabase.from('votes').upsert({ post_id: post.id, user_id: currentUserId, value: 1 })
-    } else {
-      await supabase.from('votes').delete().match({ post_id: post.id, user_id: currentUserId })
+    if (voteLoading) return
+
+    const wasVoted = voted
+    const prevCount = voteCount
+
+    // Optimistic update
+    setVoted(!wasVoted)
+    setVoteCount(wasVoted ? Math.max(0, prevCount - 1) : prevCount + 1)
+    setVoteLoading(true)
+
+    try {
+      if (!wasVoted) {
+        await supabase.from('votes').upsert(
+          { post_id: post.id, user_id: currentUserId, value: 1 },
+          { onConflict: 'post_id,user_id' }
+        )
+      } else {
+        await supabase.from('votes').delete()
+          .match({ post_id: post.id, user_id: currentUserId })
+      }
+      // Confirm from DB
+      const { data } = await supabase
+        .from('posts')
+        .select('upvotes_count')
+        .eq('id', post.id)
+        .single()
+      if (data) setVoteCount(Math.max(0, data.upvotes_count))
+    } catch {
+      // Rollback on error
+      setVoted(wasVoted)
+      setVoteCount(prevCount)
+    } finally {
+      setVoteLoading(false)
     }
   }
+
+  const type = TYPE_STYLES[post.type] || TYPE_STYLES.thought
 
   return (
     <Link href={`/post/${post.id}`} style={{ display: 'block', textDecoration: 'none' }}>
@@ -77,7 +108,12 @@ export default function PostCard({ post, currentUserId }: { post: any; currentUs
         )}
 
         {/* Text */}
-        <div style={{ fontFamily: post.type === 'insight' ? 'Georgia,serif' : 'inherit', fontSize: post.type === 'insight' ? 15 : 14, fontStyle: post.type === 'insight' ? 'italic' : 'normal', lineHeight: 1.65, color: 'var(--t1)', marginBottom: post.subtext ? 8 : 10 }}>
+        <div style={{
+          fontFamily: post.type === 'insight' ? 'Georgia,serif' : 'inherit',
+          fontSize: post.type === 'insight' ? 15 : 14,
+          fontStyle: post.type === 'insight' ? 'italic' : 'normal',
+          lineHeight: 1.65, color: 'var(--t1)', marginBottom: post.subtext ? 8 : 10
+        }}>
           {post.type === 'insight' ? `\u201C${post.text}\u201D` : post.text}
         </div>
 
@@ -96,11 +132,12 @@ export default function PostCard({ post, currentUserId }: { post: any; currentUs
 
         {/* Footer */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 10, borderTop: '1px solid var(--b1)' }}>
-          <button onClick={handleVote} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 7, border: `1px solid ${voted ? 'var(--gr)' : 'var(--b1)'}`, background: voted ? 'var(--gr-t)' : 'transparent', fontSize: 11, color: voted ? 'var(--gr)' : 'var(--t3)', fontWeight: voted ? 600 : 400, transition: 'all 0.12s' }}>
-            ↑ {fmtNum(votes)}
+          <button onClick={handleVote} disabled={voteLoading}
+            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 7, border: `1px solid ${voted ? 'var(--gr)' : 'var(--b1)'}`, background: voted ? 'var(--gr-t)' : 'transparent', fontSize: 11, color: voted ? 'var(--gr)' : 'var(--t3)', fontWeight: voted ? 600 : 400, transition: 'all 0.12s', cursor: voteLoading ? 'wait' : 'pointer', opacity: voteLoading ? 0.6 : 1 }}>
+            ↑ {fmtNum(voteCount)}
           </button>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--b1)', fontSize: 11, color: 'var(--t3)' }}>
-            ◎ {post.comments_count ?? 0}
+            ◎ {fmtNum(commentCount)}
           </span>
         </div>
       </div>
