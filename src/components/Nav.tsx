@@ -84,7 +84,20 @@ export default function Nav() {
                   </span>
                 )}
               </Link>
-              <Link href="/post/create" className="btn-primary" style={{ textDecoration: 'none' }}>+ Post</Link>
+              <Link href="/post/create" style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '7px 14px', borderRadius: 9,
+                background: 'var(--gr)', color: '#fff',
+                textDecoration: 'none', fontSize: 13, fontWeight: 700,
+                transition: 'opacity 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget as HTMLElement).style.opacity='0.88'}
+              onMouseLeave={e => (e.currentTarget as HTMLElement).style.opacity='1'}>
+                <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+                  <path d="M9.5 1.5L11.5 3.5L4.5 10.5L1.5 11.5L2.5 8.5L9.5 1.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Write
+              </Link>
 
               {/* Profile dropdown */}
               <div ref={dropRef} style={{ position: 'relative' }}>
