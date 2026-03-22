@@ -10,7 +10,7 @@ export default async function PostPage({ params }: { params: { id: string } }) {
 
   const [{ data: post }, { data: trendingBooks }] = await Promise.all([
     supabase.from('posts_with_details').select('*').eq('id', params.id).single(),
-    supabase.from('books').select('id,title,author,insights_count').order('insights_count', { ascending: false }).limit(5),
+    supabase.from('books').select('id,title,author,insights_count').gt('insights_count', 0).order('insights_count', { ascending: false }).limit(5),
   ])
   if (!post) notFound()
 
