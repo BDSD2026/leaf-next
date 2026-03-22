@@ -48,7 +48,7 @@ export default function FeedClient({ initialPosts, trendingBooks, activeReaders,
   return (
     <div className="container">
       <div className="grid-layout">
-        <Sidebar trendingBooks={trendingBooks} activeReaders={activeReaders} userId={currentUserId} username={profile?.username} unread={unread} />
+        <Sidebar trendingBooks={trendingBooks} unread={unread} />
 
         <main className="main-content">
           <div style={{ padding: '18px 20px' }}>
