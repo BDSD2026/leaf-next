@@ -23,8 +23,8 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect routes that require auth
-  const protectedPaths = ['/shelf', '/notifications', '/profile/edit']
+  // Only protect pages that absolutely require auth
+  const protectedPaths = ['/shelf', '/notifications', '/post/create', '/profile/edit']
   const isProtected = protectedPaths.some(p => request.nextUrl.pathname.startsWith(p))
   if (isProtected && !user) {
     return NextResponse.redirect(new URL('/auth/login', request.url))
