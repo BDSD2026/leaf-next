@@ -30,7 +30,7 @@ export default async function FeedPage({ searchParams }: { searchParams: { sort?
 
   // Fetch sidebar data
   const { data: trendingBooks } = await supabase
-    .from('books').select('id,title,author,insights_count').order('insights_count', { ascending: false }).limit(5)
+    .from('books').select('id,title,author,insights_count').gt('insights_count', 0).order('insights_count', { ascending: false }).limit(5)
 
   // Fetch user votes if logged in
   let userVotes: Record<string, number> = {}
