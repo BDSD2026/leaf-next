@@ -26,12 +26,10 @@ const ago = (ts: string) => {
 export default function PostCard({ post, currentUserId }: { post: any; currentUserId?: string }) {
   const router = useRouter()
   const supabase = createClient()
-
-  // user_vote: 1 = upvoted, 0 = not voted
   const [voted, setVoted] = useState(post.user_vote === 1)
   const [voteCount, setVoteCount] = useState(Math.max(0, post.upvotes_count ?? 0))
   const [voteLoading, setVoteLoading] = useState(false)
-  const [commentCount, setCommentCount] = useState(post.comments_count ?? 0)
+  const type = TYPE_STYLES[post.type] || TYPE_STYLES.thought
 
   const handleVote = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -42,30 +40,39 @@ export default function PostCard({ post, currentUserId }: { post: any; currentUs
     const wasVoted = voted
     const prevCount = voteCount
 
-    // Optimistic update
+    // Optimistic update immediately
     setVoted(!wasVoted)
     setVoteCount(wasVoted ? Math.max(0, prevCount - 1) : prevCount + 1)
     setVoteLoading(true)
 
     try {
       if (!wasVoted) {
-        await supabase.from('votes').upsert(
-          { post_id: post.id, user_id: currentUserId, value: 1 },
-          { onConflict: 'post_id,user_id' }
-        )
+        // Insert vote — primary key is (user_id, post_id)
+        const { error } = await supabase
+          .from('votes')
+          .insert({ user_id: currentUserId, post_id: post.id, value: 1 })
+        if (error && error.code === '23505') {
+          // Already voted (duplicate key) — update instead
+          await supabase
+            .from('votes')
+            .update({ value: 1 })
+            .match({ user_id: currentUserId, post_id: post.id })
+        }
       } else {
-        await supabase.from('votes').delete()
-          .match({ post_id: post.id, user_id: currentUserId })
+        await supabase
+          .from('votes')
+          .delete()
+          .match({ user_id: currentUserId, post_id: post.id })
       }
-      // Confirm from DB
+      // Read back the true count from DB after trigger fires
       const { data } = await supabase
         .from('posts')
         .select('upvotes_count')
         .eq('id', post.id)
         .single()
-      if (data) setVoteCount(Math.max(0, data.upvotes_count))
+      if (data != null) setVoteCount(Math.max(0, data.upvotes_count))
     } catch {
-      // Rollback on error
+      // Rollback on any error
       setVoted(wasVoted)
       setVoteCount(prevCount)
     } finally {
@@ -73,12 +80,9 @@ export default function PostCard({ post, currentUserId }: { post: any; currentUs
     }
   }
 
-  const type = TYPE_STYLES[post.type] || TYPE_STYLES.thought
-
   return (
     <Link href={`/post/${post.id}`} style={{ display: 'block', textDecoration: 'none' }}>
       <div className="card" style={{ marginBottom: 8, cursor: 'pointer' }}>
-        {/* Author row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
           <Link href={`/profile/${post.author_username}`} onClick={e => e.stopPropagation()}>
             <Avatar name={post.author_name || '?'} color={post.author_color} avatarUrl={post.author_avatar} size={28} />
@@ -92,7 +96,6 @@ export default function PostCard({ post, currentUserId }: { post: any; currentUs
           </div>
         </div>
 
-        {/* Book chip */}
         {post.book_title && (
           <Link href={`/book/${post.book_id}`} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', background: 'var(--s3)', borderRadius: 8, marginBottom: 10 }}>
@@ -107,13 +110,7 @@ export default function PostCard({ post, currentUserId }: { post: any; currentUs
           </Link>
         )}
 
-        {/* Text */}
-        <div style={{
-          fontFamily: post.type === 'insight' ? 'Georgia,serif' : 'inherit',
-          fontSize: post.type === 'insight' ? 15 : 14,
-          fontStyle: post.type === 'insight' ? 'italic' : 'normal',
-          lineHeight: 1.65, color: 'var(--t1)', marginBottom: post.subtext ? 8 : 10
-        }}>
+        <div style={{ fontFamily: post.type === 'insight' ? 'Georgia,serif' : 'inherit', fontSize: post.type === 'insight' ? 15 : 14, fontStyle: post.type === 'insight' ? 'italic' : 'normal', lineHeight: 1.65, color: 'var(--t1)', marginBottom: post.subtext ? 8 : 10 }}>
           {post.type === 'insight' ? `\u201C${post.text}\u201D` : post.text}
         </div>
 
@@ -123,21 +120,19 @@ export default function PostCard({ post, currentUserId }: { post: any; currentUs
           </div>
         )}
 
-        {/* Tags */}
         {post.tags?.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 10 }}>
             {post.tags.map((t: string) => <span key={t} className="tag">#{t}</span>)}
           </div>
         )}
 
-        {/* Footer */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 10, borderTop: '1px solid var(--b1)' }}>
           <button onClick={handleVote} disabled={voteLoading}
-            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 7, border: `1px solid ${voted ? 'var(--gr)' : 'var(--b1)'}`, background: voted ? 'var(--gr-t)' : 'transparent', fontSize: 11, color: voted ? 'var(--gr)' : 'var(--t3)', fontWeight: voted ? 600 : 400, transition: 'all 0.12s', cursor: voteLoading ? 'wait' : 'pointer', opacity: voteLoading ? 0.6 : 1 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 7, border: `1px solid ${voted ? 'var(--gr)' : 'var(--b1)'}`, background: voted ? 'var(--gr-t)' : 'transparent', fontSize: 11, color: voted ? 'var(--gr)' : 'var(--t3)', fontWeight: voted ? 600 : 400, transition: 'all 0.12s', cursor: voteLoading ? 'wait' : 'pointer', opacity: voteLoading ? 0.7 : 1 }}>
             ↑ {fmtNum(voteCount)}
           </button>
           <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', borderRadius: 7, border: '1px solid var(--b1)', fontSize: 11, color: 'var(--t3)' }}>
-            ◎ {fmtNum(commentCount)}
+            ◎ {fmtNum(post.comments_count ?? 0)}
           </span>
         </div>
       </div>
