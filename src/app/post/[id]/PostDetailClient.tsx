@@ -19,7 +19,7 @@ const ago = (ts: string) => {
   if (s < 60) return 'now'; if (s < 3600) return Math.floor(s/60)+'m'
   if (s < 86400) return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'
 }
-export default function PostDetailClient({ post, comments: initComments, currentUserId, profile }: any) {
+export default function PostDetailClient({ post, comments: initComments, currentUserId, profile, trendingBooks = [] }: any) {
   const router = useRouter()
   const supabase = createClient()
   const [votes, setVotes] = useState(post.upvotes_count ?? 0)
@@ -43,8 +43,8 @@ export default function PostDetailClient({ post, comments: initComments, current
     setPosting(false)
   }
   return (
-    <div className="container">
-      <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 20px' }}>
+    <PageLayout trendingBooks={trendingBooks}>
+      <div style={{ padding: '24px 20px' }}>
         <button onClick={() => router.back()} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--t3)', marginBottom: 20, padding: 0 }}>‹ Back</button>
         <div className="card" style={{ marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
@@ -104,7 +104,6 @@ export default function PostDetailClient({ post, comments: initComments, current
           </div>
         </div>
       </div>
-    </div>
     </PageLayout>
   )
 }
