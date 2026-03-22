@@ -111,7 +111,6 @@ function ShelfButton({ book, currentUserId }: { book: any; currentUserId?: strin
         </div>
       )}
     </div>
-    </PageLayout>
   )
 }
 
