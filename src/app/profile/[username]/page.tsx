@@ -10,7 +10,7 @@ export default async function ProfilePage({ params }: { params: { username: stri
 
   const [{ data: profile }, { data: trendingBooks }] = await Promise.all([
     supabase.from('profiles').select('*').eq('username', params.username).single(),
-    supabase.from('books').select('id,title,author,insights_count').order('insights_count', { ascending: false }).limit(5),
+    supabase.from('books').select('id,title,author,insights_count').gt('insights_count', 0).order('insights_count', { ascending: false }).limit(5),
   ])
   if (!profile) return notFound()
 
