@@ -8,7 +8,7 @@ export default async function NotificationsPage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    return <NotificationsClient notifications={[]} currentUserId={undefined} />
+    return <NotificationsClient notifs={[]} userId="" />
   }
 
   const { data: notifications } = await supabase
@@ -18,9 +18,8 @@ export default async function NotificationsPage() {
     .order('created_at', { ascending: false })
     .limit(50)
 
-  // Mark all as read
   await supabase.from('notifications').update({ is_read: true })
     .eq('recipient_id', user.id).eq('is_read', false)
 
-  return <NotificationsClient notifications={notifications || []} currentUserId={user.id} />
+  return <NotificationsClient notifs={notifications || []} userId={user.id} />
 }
