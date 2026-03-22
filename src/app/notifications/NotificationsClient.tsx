@@ -1,3 +1,4 @@
+import PageLayout from '@/components/PageLayout'
 'use client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -21,10 +22,11 @@ const label = (n: any) => {
   return `${name} interacted with you`
 }
 
-export default function NotificationsClient({ notifs, userId }: { notifs: any[], userId: string }) {
+export default function NotificationsClient({ notifs, userId, trendingBooks = [] }: { notifs: any[], userId: string, trendingBooks?: any[] }) {
   const router = useRouter()
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 20px' }}>
+    <PageLayout trendingBooks={trendingBooks}>
+    <div style={{ padding: '24px 20px' }}>
       <h1 className="serif" style={{ fontSize: 28, fontWeight: 700, color: 'var(--t1)', marginBottom: 20 }}>Notifications</h1>
 
       {notifs.length === 0 ? (
@@ -47,5 +49,6 @@ export default function NotificationsClient({ notifs, userId }: { notifs: any[],
         </div>
       ))}
     </div>
+      </PageLayout>
   )
 }
