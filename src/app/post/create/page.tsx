@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Suspense } from 'react'
 import LeafLogo from '@/components/LeafLogo'
+import PageLayout from '@/components/PageLayout'
 import Image from 'next/image'
 
 const TYPE_CONFIG: Record<string, {
@@ -388,8 +389,10 @@ function CreatePostInner() {
 
 export default function CreatePostPage() {
   return (
+    <PageLayout>
     <Suspense fallback={<div style={{ minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>}>
       <CreatePostInner />
     </Suspense>
+    </PageLayout>
   )
 }
