@@ -1,5 +1,5 @@
 'use client'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
@@ -102,21 +102,34 @@ export default function FeedClient({ initialPosts, trendingBooks, currentUserId,
 
           <div>
             <div className="sidebar-heading">Active Readers</div>
-            <div style={{ background: 'var(--s1)', border: '1px solid var(--b1)', borderRadius: 12, overflow: 'hidden' }}>
-              {activeReaders.map((u, i) => (
-                <Link key={u.id} href={`/profile/${u.username}`}
-                  style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', borderBottom: i < activeReaders.length - 1 ? '1px solid var(--b1)' : 'none', textDecoration: 'none' }}>
-                  <Avatar name={u.name || u.username} color={u.color} avatarUrl={u.avatar_url} size={26} />
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t1)' }}>{u.name || u.username}</div>
-                    <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>@{u.username}</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <ActiveReaders />
           </div>
         </aside>
       </div>
     </div>
   )
 }
+
+function ActiveReaders() {
+  const [readers, setReaders] = useState<any[]>([])
+  const supabase = createClient()
+  useEffect(() => {
+    supabase.from('profiles').select('id,username,name,color,avatar_url')
+      .order('created_at', { ascending: false }).limit(5)
+      .then(({ data }) => setReaders(data || []))
+  }, [])
+  return (
+    <div style={{ background: 'var(--s1)', border: '1px solid var(--b1)', borderRadius: 12, overflow: 'hidden' }}>
+      {readers.length === 0 && <div style={{ padding: 14, fontSize: 12, color: 'var(--t3)', textAlign: 'center' }}>No readers yet</div>}
+      {readers.map((u, i) => (
+        <Link key={u.id} href={`/profile/${u.username}`}
+          style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 14px', borderBottom: i < readers.length - 1 ? '1px solid var(--b1)' : 'none', textDecoration: 'none' }}>
+          <Avatar name={u.name || u.username} color={u.color} avatarUrl={u.avatar_url} size={26} />
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t1)' }}>{u.name || u.username}</div>
+            <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>@{u.username}</div>
+          </div>
+        </Link>
+      ))}
+    </div>
+  )
