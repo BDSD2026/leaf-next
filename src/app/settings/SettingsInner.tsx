@@ -17,6 +17,19 @@ export default function SettingsInner() {
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState('')
   const [theme, setTheme] = useState('dark')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('leaf-theme') || 'dark'
+    setTheme(saved)
+  }, [])
+
+  const applyTheme = (t: string) => {
+    setTheme(t)
+    if (typeof window !== 'undefined' && (window as any).__setLeafTheme) {
+      (window as any).__setLeafTheme(t)
+    }
+    pop('Theme changed ✓')
+  }
   const [emailNotifs, setEmailNotifs] = useState(true)
   const [publicProfile, setPublicProfile] = useState(true)
   const [deleteConfirm, setDeleteConfirm] = useState('')
@@ -165,7 +178,7 @@ export default function SettingsInner() {
                   { id: 'light', label: 'Light', bg: '#F8F8F5', accent: '#2A8A6A' },
                   { id: 'system', label: 'System', bg: 'linear-gradient(135deg,#0C0C0E 50%,#F8F8F5 50%)', accent: '#5CD4A4' },
                 ].map(t => (
-                  <button key={t.id} onClick={() => { setTheme(t.id); pop('Theme preference saved') }}
+                  <button key={t.id} onClick={() => applyTheme(t.id)}
                     style={{ border: `2px solid ${theme === t.id ? '#5CD4A4' : 'var(--b1)'}`, borderRadius: 12, padding: 16, cursor: 'pointer', background: 'var(--s1)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
                     <div style={{ width: 48, height: 32, borderRadius: 6, background: t.bg, border: '1px solid var(--b1)' }} />
                     <span style={{ fontSize: 12, color: theme === t.id ? '#5CD4A4' : 'var(--t2)', fontWeight: theme === t.id ? 700 : 400 }}>{t.label}</span>
