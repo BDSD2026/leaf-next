@@ -14,9 +14,12 @@ export default async function ProfilePage({ params }: { params: { username: stri
   ])
   if (!profile) return notFound()
 
-  const [{ data: posts }, { data: shelf }] = await Promise.all([
+  const [{ data: posts }, { data: shelf }, { data: comments }] = await Promise.all([
     supabase.from('posts_with_details').select('*').eq('user_id', profile.id).eq('is_deleted', false).order('created_at', { ascending: false }),
     supabase.from('shelves').select('*, book:books(id,title,author,cover_url,genre)').eq('user_id', profile.id),
+    supabase.from('comments')
+      .select('id,text,created_at,post_id,posts!comments_post_id_fkey(id,type,text,book_id,books!posts_book_id_fkey(id,title,author,cover_url))')
+      .eq('user_id', profile.id).eq('is_deleted', false).order('created_at', { ascending: false }).limit(50),
   ])
 
   let isFollowing = false, myProfile = null
@@ -29,5 +32,5 @@ export default async function ProfilePage({ params }: { params: { username: stri
     myProfile = mp
   }
 
-  return <ProfileClient profile={profile} posts={posts || []} shelf={shelf || []} isFollowing={isFollowing} currentUserId={user?.id} myProfile={myProfile} isMe={user?.id === profile.id} trendingBooks={trendingBooks || []} />
+  return <ProfileClient profile={profile} posts={posts || []} comments={comments || []} shelf={shelf || []} isFollowing={isFollowing} currentUserId={user?.id} myProfile={myProfile} isMe={user?.id === profile.id} trendingBooks={trendingBooks || []} />
 }
