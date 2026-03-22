@@ -1,3 +1,4 @@
+import PageLayout from '@/components/PageLayout'
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
@@ -33,7 +34,7 @@ function BookCover({ book, size = 'md' }: { book: any; size?: 'sm' | 'md' | 'lg'
     : <div style={{ width: dims[0], height: dims[1], background: 'var(--s3)', borderRadius: size === 'lg' ? 8 : 6, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size === 'lg' ? 28 : 18 }}>📖</div>
 }
 
-export default function ShelfClient({ shelf: initShelf, userId }: { shelf: any[]; userId: string }) {
+export default function ShelfClient({ shelf: initShelf, userId, trendingBooks = [] }: { shelf: any[]; userId: string; trendingBooks?: any[] }) {
   const [shelf, setShelf] = useState(initShelf)
   const [toast, setToast] = useState('')
   const supabase = createClient()
@@ -56,7 +57,8 @@ export default function ShelfClient({ shelf: initShelf, userId }: { shelf: any[]
   const want_to_read = shelf.filter(e => e.status === 'want_to_read')
 
   return (
-    <div style={{ maxWidth: 760, margin: '0 auto', padding: '24px 20px' }}>
+    <PageLayout trendingBooks={trendingBooks}>
+    <div style={{ padding: '24px 20px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <h1 className="serif" style={{ fontSize: 28, fontWeight: 700, color: 'var(--t1)' }}>My Shelf</h1>
@@ -160,6 +162,7 @@ export default function ShelfClient({ shelf: initShelf, userId }: { shelf: any[]
 
       {toast && <div className="toast">{toast}</div>}
     </div>
+    </PageLayout>
   )
 }
 
