@@ -58,7 +58,7 @@ export default function SignupPage() {
           {fields.map(f => (
             <div key={f.key} style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{f.label}</label>
-              <input type={f.type} value={(form as any)[f.key]} onChange={set(f.key)} required placeholder={f.placeholder}
+              <input type={f.type} value={(form as any)[f.key]} required placeholder={f.placeholder}
                 className="input"
                 onChange={e => { if (f.key === 'username') setForm(v => ({ ...v, username: e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, '') })); else set(f.key)(e) }} />
             </div>
