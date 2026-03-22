@@ -39,6 +39,35 @@ export default function Nav() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Reset unread count when notifications page is visited
+  useEffect(() => {
+    if (pathname === '/notifications' && unread > 0) {
+      setUnread(0)
+    }
+  }, [pathname])
+
+  // Realtime: listen for new notifications
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase
+      .channel('nav-notifs')
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'notifications',
+        filter: `recipient_id=eq.${user.id}`
+      }, () => setUnread(n => n + 1))
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'notifications',
+        filter: `recipient_id=eq.${user.id}`
+      }, () => {
+        // Re-fetch unread count when notifications are updated (marked read)
+        supabase.from('notifications').select('id', { count: 'exact', head: true })
+          .eq('recipient_id', user.id).eq('is_read', false)
+          .then(({ count }) => setUnread(count ?? 0))
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [user])
+
   // Close dropdown on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
