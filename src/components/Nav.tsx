@@ -48,6 +48,9 @@ export default function Nav() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // Don't show nav on landing page
+  if (pathname === '/') return null
+
   const isActive = (path: string) => pathname?.startsWith(path)
 
   const handleSignOut = async () => {
