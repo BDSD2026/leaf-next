@@ -92,14 +92,34 @@ function CreatePostInner() {
     })
   }, [])
 
-  // Pre-select book if coming from book page
+  // Pre-select book if coming from book page (handles both UUID and google_id)
   useEffect(() => {
     const bookId = searchParams.get('book')
-    if (bookId) {
-      supabase.from('books').select('*').eq('id', bookId).single().then(({ data }) => {
-        if (data) setSelectedBook(data)
-      })
-    }
+    if (!bookId) return
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bookId)
+    const query = isUUID
+      ? supabase.from('books').select('*').eq('id', bookId).single()
+      : supabase.from('books').select('*').eq('google_id', bookId).maybeSingle()
+    query.then(({ data }) => {
+      if (data) setSelectedBook(data)
+      else if (!isUUID) {
+        // Fetch from Google Books API and upsert
+        fetch(`https://www.googleapis.com/books/v1/volumes/${bookId}`)
+          .then(r => r.json())
+          .then(item => {
+            if (!item.volumeInfo) return
+            const info = item.volumeInfo
+            const book = {
+              google_id: item.id,
+              title: info.title || 'Unknown',
+              author: (info.authors || ['Unknown']).join(', '),
+              cover_url: info.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
+              genre: info.categories?.[0] || null,
+            }
+            setSelectedBook(book)
+          })
+      }
+    })
   }, [])
 
   const searchBooks = async (q: string) => {
