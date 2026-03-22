@@ -21,15 +21,12 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // CRITICAL: Always call getUser() to refresh the session token in cookies.
+  // This must run on every request — do not remove it.
+  await supabase.auth.getUser()
 
-  // Only protect pages that absolutely require auth
-  const protectedPaths = ['/shelf', '/notifications', '/post/create', '/profile/edit']
-  const isProtected = protectedPaths.some(p => request.nextUrl.pathname.startsWith(p))
-  if (isProtected && !user) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
-  }
-
+  // Do NOT do auth-based redirects here — they cause redirect loops
+  // when cookies haven't propagated yet. Let each page handle its own auth.
   return supabaseResponse
 }
 
