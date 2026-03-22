@@ -37,7 +37,7 @@ function RightSidebar({ trendingBooks }: { trendingBooks: any[] }) {
                   {b.title?.length > 26 ? b.title.slice(0, 26) + '…' : b.title}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 1 }}>
-                  {b.insights_count ?? 0} insight{b.insights_count !== 1 ? 's' : ''}
+                  {(b.insights_count ?? 0) > 0 ? `${b.insights_count} insight${b.insights_count !== 1 ? 's' : ''}` : 'No insights yet'}
                 </div>
               </div>
             </Link>
