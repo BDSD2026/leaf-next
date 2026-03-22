@@ -56,9 +56,46 @@ function ShelfSection({ color, label, count, children }: { color: string; label:
   )
 }
 
+
+function CommentActivity({ comment }: { comment: any }) {
+  const post = comment.posts
+  const book = post?.books
+  const ago = (ts: string) => {
+    const s = (Date.now() - new Date(ts).getTime()) / 1000
+    if (s < 60) return 'now'
+    if (s < 3600) return Math.floor(s / 60) + 'm'
+    if (s < 86400) return Math.floor(s / 3600) + 'h'
+    return Math.floor(s / 86400) + 'd'
+  }
+  return (
+    <Link href={`/post/${comment.post_id}`} style={{ display: 'block', textDecoration: 'none' }}>
+      <div className="card" style={{ marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--t3)', background: 'var(--s3)', padding: '2px 8px', borderRadius: 20 }}>◎ Comment</span>
+          <span style={{ fontSize: 11, color: 'var(--t3)' }}>{ago(comment.created_at)}</span>
+        </div>
+        {book && (
+          <div style={{ display: 'flex', gap: 6, padding: '6px 10px', background: 'var(--s3)', borderRadius: 8, marginBottom: 8, alignItems: 'center' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t1)' }}>{book.title}</div>
+            <div style={{ fontSize: 10, color: 'var(--t3)' }}>· {book.author}</div>
+          </div>
+        )}
+        <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }}>
+          {comment.text}
+        </div>
+        {post?.text && (
+          <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--b1)', fontStyle: 'italic' }}>
+            ↳ on "{post.text?.slice(0, 80)}{(post.text?.length ?? 0) > 80 ? '…' : ''}"
+          </div>
+        )}
+      </div>
+    </Link>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function ProfileClient({ profile, posts, shelf, isFollowing: initFollowing, currentUserId, myProfile, isMe, trendingBooks = [] }: any) {
+export default function ProfileClient({ profile, posts, comments = [], shelf, isFollowing: initFollowing, currentUserId, myProfile, isMe, trendingBooks = [] }: any) {
   const router = useRouter()
   const supabase = createClient()
   const [following, setFollowing] = useState(initFollowing)
@@ -123,17 +160,31 @@ export default function ProfileClient({ profile, posts, shelf, isFollowing: init
 
         {/* Tabs */}
         <div className="tabs" style={{ marginBottom: 16 }}>
-          {[['posts','Posts'],['shelf','Shelf'],['about','About']].map(([k,l]) => (
+          {[['posts','Activity'],['shelf','Shelf'],['about','About']].map(([k,l]) => (
             <button key={k} onClick={() => setTab(k)} className={`tab ${tab === k ? 'active' : ''}`}>{l}</button>
           ))}
         </div>
 
-        {/* ── POSTS TAB ── */}
-        {tab === 'posts' && (
-          posts.length === 0
-            ? <div className="empty"><div className="empty-icon">✍️</div><div className="empty-text">No posts yet</div></div>
-            : posts.map((p: any) => <PostCard key={p.id} post={p} currentUserId={currentUserId} />)
-        )}
+        {/* ── ACTIVITY TAB (posts + comments merged) ── */}
+        {tab === 'posts' && (() => {
+          // Merge posts and comments sorted by created_at desc
+          const postItems = posts.map((p: any) => ({ ...p, _kind: 'post' }))
+          const commentItems = comments.map((c: any) => ({ ...c, _kind: 'comment' }))
+          const all = [...postItems, ...commentItems].sort((a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          )
+          if (all.length === 0) return (
+            <div className="empty"><div className="empty-icon">✍️</div><div className="empty-text">No activity yet</div></div>
+          )
+          return (
+            <div>
+              {all.map((item: any) => item._kind === 'post'
+                ? <PostCard key={`post-${item.id}`} post={item} currentUserId={currentUserId} />
+                : <CommentActivity key={`comment-${item.id}`} comment={item} />
+              )}
+            </div>
+          )
+        })()}
 
         {/* ── SHELF TAB — physical rail design ── */}
         {tab === 'shelf' && (
