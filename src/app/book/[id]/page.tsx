@@ -49,7 +49,7 @@ export default async function BookPage({ params }: { params: { id: string } }) {
 
   const [{ data: posts }, { data: trendingBooks }] = await Promise.all([
     supabase.from('posts_with_details').select('*').eq('book_id', book.id).eq('is_deleted', false).order('created_at', { ascending: false }),
-    supabase.from('books').select('id,title,author,insights_count').order('insights_count', { ascending: false }).limit(5),
+    supabase.from('books').select('id,title,author,insights_count').gt('insights_count', 0).order('insights_count', { ascending: false }).limit(5),
   ])
 
   let shelfEntry = null, userVotes: Record<string, number> = {}, profile = null
