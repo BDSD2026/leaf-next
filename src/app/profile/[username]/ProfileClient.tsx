@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -9,8 +9,16 @@ import PageLayout from '@/components/PageLayout'
 import Avatar from '@/components/Avatar'
 
 const fmtNum = (n: number) => n >= 1000 ? (n/1000).toFixed(1)+'k' : String(n)
+const ago = (ts: string) => {
+  const s = (Date.now() - new Date(ts).getTime()) / 1000
+  if (s < 60) return 'now'
+  if (s < 3600) return Math.floor(s / 60) + 'm'
+  if (s < 86400) return Math.floor(s / 3600) + 'h'
+  if (s < 604800) return Math.floor(s / 86400) + 'd'
+  return Math.floor(s / 604800) + 'w'
+}
 
-// ── Shelf rail components (matches ShelfClient design) ──────────────────────
+// ── Shelf components ─────────────────────────────────────────────────────────
 
 function Stars({ rating }: { rating?: number }) {
   return (
@@ -56,40 +64,82 @@ function ShelfSection({ color, label, count, children }: { color: string; label:
   )
 }
 
+// ── Twitter-style comment card ────────────────────────────────────────────────
 
-function CommentActivity({ comment }: { comment: any }) {
+function CommentActivity({ comment, profile }: { comment: any; profile: any }) {
   const post = comment.posts
   const book = post?.books
-  const ago = (ts: string) => {
-    const s = (Date.now() - new Date(ts).getTime()) / 1000
-    if (s < 60) return 'now'
-    if (s < 3600) return Math.floor(s / 60) + 'm'
-    if (s < 86400) return Math.floor(s / 3600) + 'h'
-    return Math.floor(s / 86400) + 'd'
-  }
   return (
-    <Link href={`/post/${comment.post_id}`} style={{ display: 'block', textDecoration: 'none' }}>
-      <div className="card" style={{ marginBottom: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--t3)', background: 'var(--s3)', padding: '2px 8px', borderRadius: 20 }}>◎ Comment</span>
-          <span style={{ fontSize: 11, color: 'var(--t3)' }}>{ago(comment.created_at)}</span>
-        </div>
-        {book && (
-          <div style={{ display: 'flex', gap: 6, padding: '6px 10px', background: 'var(--s3)', borderRadius: 8, marginBottom: 8, alignItems: 'center' }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t1)' }}>{book.title}</div>
-            <div style={{ fontSize: 10, color: 'var(--t3)' }}>· {book.author}</div>
+    <Link href={`/post/${comment.post_id}`} style={{ display: 'block', textDecoration: 'none', marginBottom: 8 }}>
+      <div className="card" style={{ cursor: 'pointer' }}>
+        {/* Author row — same pattern as PostCard */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <Avatar name={profile.name} color={profile.color} avatarUrl={profile.avatar_url} size={28} />
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--t1)' }}>{profile.name}</span>
+              <span className="badge" style={{ background: 'var(--s3)', color: 'var(--t3)' }}>◎ Comment</span>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--t3)' }}>@{profile.username} · {ago(comment.created_at)}</div>
           </div>
-        )}
-        <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }}>
+        </div>
+
+        {/* The comment text — plain and clean like a tweet */}
+        <div style={{ fontSize: 14, color: 'var(--t1)', lineHeight: 1.65, marginBottom: 10 }}>
           {comment.text}
         </div>
-        {post?.text && (
-          <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--b1)', fontStyle: 'italic' }}>
-            ↳ on "{post.text?.slice(0, 80)}{(post.text?.length ?? 0) > 80 ? '…' : ''}"
+
+        {/* Context: which post/book this was on */}
+        <div style={{ padding: '8px 12px', background: 'var(--s2)', borderRadius: 8, border: '1px solid var(--b1)', display: 'flex', alignItems: 'center', gap: 8 }}>
+          {book?.cover_url && (
+            <Image src={book.cover_url} alt="" width={18} height={26} style={{ borderRadius: 3, objectFit: 'cover', flexShrink: 0 }} />
+          )}
+          <div style={{ minWidth: 0 }}>
+            {book && (
+              <div style={{ fontSize: 10, color: 'var(--t3)', marginBottom: 2 }}>
+                {book.title}
+              </div>
+            )}
+            <div style={{ fontSize: 11, color: 'var(--t3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: 'italic' }}>
+              ↳ "{post?.text?.slice(0, 70)}{(post?.text?.length ?? 0) > 70 ? '…' : ''}"
+            </div>
+          </div>
+          <div style={{ marginLeft: 'auto', flexShrink: 0, fontSize: 10, color: 'var(--t3)' }}>View thread →</div>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+// ── Followers/Following modal ─────────────────────────────────────────────────
+
+function FollowModal({ title, users, onClose }: { title: string; users: any[]; onClose: () => void }) {
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400, maxHeight: '80vh' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <h2 className="serif" style={{ fontSize: 18, fontWeight: 700, color: 'var(--t1)' }}>{title}</h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--t3)', lineHeight: 1 }}>✕</button>
+        </div>
+        {users.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--t3)', fontSize: 13 }}>No {title.toLowerCase()} yet</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {users.map(u => (
+              <Link key={u.id} href={`/profile/${u.username}`} onClick={onClose}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', textDecoration: 'none', borderBottom: '1px solid var(--b1)' }}>
+                <Avatar name={u.name || u.username} color={u.color} avatarUrl={u.avatar_url} size={38} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--t1)' }}>{u.name || u.username}</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)' }}>@{u.username}</div>
+                  {u.bio && <div style={{ fontSize: 12, color: 'var(--t2)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.bio}</div>}
+                </div>
+              </Link>
+            ))}
           </div>
         )}
       </div>
-    </Link>
+    </div>
   )
 }
 
@@ -101,6 +151,9 @@ export default function ProfileClient({ profile, posts, comments = [], shelf, is
   const [following, setFollowing] = useState(initFollowing)
   const [followerCount, setFollowerCount] = useState(profile.followers_count || 0)
   const [tab, setTab] = useState('posts')
+  const [modal, setModal] = useState<'followers' | 'following' | null>(null)
+  const [modalUsers, setModalUsers] = useState<any[]>([])
+  const [modalLoading, setModalLoading] = useState(false)
 
   const toggleFollow = async () => {
     if (!currentUserId) { router.push('/auth/login'); return }
@@ -113,10 +166,38 @@ export default function ProfileClient({ profile, posts, comments = [], shelf, is
     }
   }
 
+  const openModal = async (type: 'followers' | 'following') => {
+    setModal(type)
+    setModalLoading(true)
+    setModalUsers([])
+    if (type === 'followers') {
+      // People who follow this profile
+      const { data } = await supabase
+        .from('follows')
+        .select('profiles!follows_follower_id_fkey(id,username,name,color,avatar_url,bio)')
+        .eq('following_id', profile.id)
+      setModalUsers((data || []).map((r: any) => r.profiles).filter(Boolean))
+    } else {
+      // People this profile follows
+      const { data } = await supabase
+        .from('follows')
+        .select('profiles!follows_following_id_fkey(id,username,name,color,avatar_url,bio)')
+        .eq('follower_id', profile.id)
+      setModalUsers((data || []).map((r: any) => r.profiles).filter(Boolean))
+    }
+    setModalLoading(false)
+  }
+
   const reading  = shelf.filter((e: any) => e.status === 'reading')
   const read     = shelf.filter((e: any) => e.status === 'read')
   const wantRead = shelf.filter((e: any) => e.status === 'want_to_read')
   const booksRead = read.length
+
+  // Merge posts + comments sorted by date
+  const activityItems = [
+    ...posts.map((p: any) => ({ ...p, _kind: 'post' })),
+    ...comments.map((c: any) => ({ ...c, _kind: 'comment' })),
+  ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
   return (
     <PageLayout trendingBooks={trendingBooks}>
@@ -142,58 +223,48 @@ export default function ProfileClient({ profile, posts, comments = [], shelf, is
           <div style={{ fontSize: 13, color: 'var(--t3)', marginBottom: profile.bio ? 10 : 16 }}>@{profile.username}</div>
           {profile.bio && <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.65, marginBottom: 16 }}>{profile.bio}</div>}
 
+          {/* Stats — Followers + Following are clickable */}
           <div style={{ display: 'flex', gap: 20, paddingTop: 14, borderTop: '1px solid var(--b1)' }}>
             {[
-              ['Posts', posts.length, 'var(--gr)'],
-              ['Books read', booksRead, 'var(--bl)'],
-              ['Followers', followerCount, 'var(--gr)'],
-              ['Following', profile.following_count || 0, 'var(--gr)'],
-            ].map(([l, n, c]) => (
-              <div key={l as string} style={{ cursor: l === 'Books read' ? 'pointer' : 'default' }}
-                onClick={l === 'Books read' ? () => setTab('shelf') : undefined}>
-                <div className="serif" style={{ fontSize: 20, fontWeight: 700, color: c as string }}>{fmtNum(n as number)}</div>
-                <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 1 }}>{l}</div>
-              </div>
+              { l: 'Posts',    n: posts.length,              onClick: () => setTab('posts'),      clickable: false },
+              { l: 'Read',     n: booksRead,                 onClick: () => setTab('shelf'),      clickable: true },
+              { l: 'Followers',n: followerCount,             onClick: () => openModal('followers'),clickable: true },
+              { l: 'Following',n: profile.following_count || 0, onClick: () => openModal('following'), clickable: true },
+            ].map(({ l, n, onClick, clickable }) => (
+              <button key={l} onClick={onClick}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}>
+                <div className="serif" style={{ fontSize: 20, fontWeight: 700, color: 'var(--gr)' }}>{fmtNum(n)}</div>
+                <div style={{ fontSize: 10, color: clickable ? 'var(--t2)' : 'var(--t3)', marginTop: 1, textDecoration: clickable ? 'underline' : 'none', textUnderlineOffset: 3 }}>{l}</div>
+              </button>
             ))}
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs — no About */}
         <div className="tabs" style={{ marginBottom: 16 }}>
-          {[['posts','Activity'],['shelf','Shelf'],['about','About']].map(([k,l]) => (
+          {[['posts','Activity'],['shelf','Shelf']].map(([k,l]) => (
             <button key={k} onClick={() => setTab(k)} className={`tab ${tab === k ? 'active' : ''}`}>{l}</button>
           ))}
         </div>
 
-        {/* ── ACTIVITY TAB (posts + comments merged) ── */}
-        {tab === 'posts' && (() => {
-          // Merge posts and comments sorted by created_at desc
-          const postItems = posts.map((p: any) => ({ ...p, _kind: 'post' }))
-          const commentItems = comments.map((c: any) => ({ ...c, _kind: 'comment' }))
-          const all = [...postItems, ...commentItems].sort((a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-          )
-          if (all.length === 0) return (
-            <div className="empty"><div className="empty-icon">✍️</div><div className="empty-text">No activity yet</div></div>
-          )
-          return (
-            <div>
-              {all.map((item: any) => item._kind === 'post'
-                ? <PostCard key={`post-${item.id}`} post={item} currentUserId={currentUserId} />
-                : <CommentActivity key={`comment-${item.id}`} comment={item} />
-              )}
-            </div>
-          )
-        })()}
+        {/* ── ACTIVITY TAB ── */}
+        {tab === 'posts' && (
+          activityItems.length === 0
+            ? <div className="empty"><div className="empty-icon">✍️</div><div className="empty-text">No activity yet</div></div>
+            : <div>
+                {activityItems.map((item: any) => item._kind === 'post'
+                  ? <PostCard key={`post-${item.id}`} post={item} currentUserId={currentUserId} />
+                  : <CommentActivity key={`comment-${item.id}`} comment={item} profile={profile} />
+                )}
+              </div>
+        )}
 
-        {/* ── SHELF TAB — physical rail design ── */}
+        {/* ── SHELF TAB ── */}
         {tab === 'shelf' && (
           <div>
             {shelf.length === 0 && (
               <div className="empty"><div className="empty-icon">📚</div><div className="empty-text">No books on shelf yet</div></div>
             )}
-
-            {/* Currently Reading — large books on rail */}
             {reading.length > 0 && (
               <ShelfSection color="var(--gr)" label="Currently Reading" count={reading.length}>
                 <ShelfRail>
@@ -206,7 +277,6 @@ export default function ProfileClient({ profile, posts, comments = [], shelf, is
                       </div>
                       <div style={{ marginTop: 7, width: 60, textAlign: 'center' }}>
                         <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--t1)', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.book?.title}</div>
-                        <div style={{ fontSize: 8, color: 'var(--t3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.book?.author?.split(' ').pop()}</div>
                         <div style={{ height: 3, background: 'var(--b2)', borderRadius: 2, marginTop: 4 }}>
                           <div style={{ height: 3, background: 'var(--gr)', borderRadius: 2, width: '40%' }} />
                         </div>
@@ -217,8 +287,6 @@ export default function ProfileClient({ profile, posts, comments = [], shelf, is
                 </ShelfRail>
               </ShelfSection>
             )}
-
-            {/* Read — medium books on rail with stars */}
             {read.length > 0 && (
               <ShelfSection color="var(--bl)" label="Read" count={read.length}>
                 <ShelfRail>
@@ -238,8 +306,6 @@ export default function ProfileClient({ profile, posts, comments = [], shelf, is
                 </ShelfRail>
               </ShelfSection>
             )}
-
-            {/* Want to Read — compact list */}
             {wantRead.length > 0 && (
               <ShelfSection color="var(--am)" label="Want to Read" count={wantRead.length}>
                 <div style={{ background: 'var(--s1)', borderRadius: 10, border: '1px solid var(--b1)', overflow: 'hidden' }}>
@@ -258,25 +324,16 @@ export default function ProfileClient({ profile, posts, comments = [], shelf, is
             )}
           </div>
         )}
-
-        {/* ── ABOUT TAB ── */}
-        {tab === 'about' && (
-          <div style={{ background: 'var(--s1)', border: '1px solid var(--b1)', borderRadius: 14, padding: 20 }}>
-            {[
-              ['Bio', profile.bio || '—'],
-              ['Username', '@' + profile.username],
-              ['Followers', fmtNum(followerCount)],
-              ['Following', fmtNum(profile.following_count || 0)],
-              ['Books read', String(booksRead)],
-            ].map(([l, v]) => (
-              <div key={l as string} style={{ display: 'flex', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--b1)' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t3)', width: 100, flexShrink: 0 }}>{l}</div>
-                <div style={{ fontSize: 13, color: 'var(--t1)', lineHeight: 1.6 }}>{v}</div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Followers / Following modal */}
+      {modal && (
+        <FollowModal
+          title={modal === 'followers' ? 'Followers' : 'Following'}
+          users={modalLoading ? [] : modalUsers}
+          onClose={() => setModal(null)}
+        />
+      )}
     </PageLayout>
   )
 }
