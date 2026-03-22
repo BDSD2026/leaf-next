@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Avatar from '@/components/Avatar'
 import PostCard from '@/components/PostCard'
+import PageLayout from '@/components/PageLayout'
 
 // Strip HTML tags from book descriptions
 function stripHtml(html: string): string {
@@ -110,6 +111,7 @@ function ShelfButton({ book, currentUserId }: { book: any; currentUserId?: strin
         </div>
       )}
     </div>
+    </PageLayout>
   )
 }
 
@@ -152,7 +154,8 @@ export default function SearchPage() {
   const showAll = tab === 'all'
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '24px 20px' }}>
+    <PageLayout>
+    <div style={{ padding: '24px 20px' }}>
       <h1 className="serif" style={{ fontSize: 28, fontWeight: 700, color: 'var(--t1)', marginBottom: 16 }}>Search</h1>
       <div style={{ position: 'relative', marginBottom: 16 }}>
         <span style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', color: 'var(--t3)', pointerEvents: 'none', fontSize: 15 }}>⌕</span>
@@ -233,5 +236,6 @@ export default function SearchPage() {
         <div className="empty"><div className="empty-icon">🤷</div><div className="empty-text">No results for "{q}"</div></div>
       )}
     </div>
+    </PageLayout>
   )
 }
