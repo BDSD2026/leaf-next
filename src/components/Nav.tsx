@@ -48,15 +48,15 @@ export default function Nav() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Don't show nav on landing page
-  if (pathname === '/') return null
+  // Don't show nav on landing page or auth pages
+  if (pathname === '/' || pathname?.startsWith('/auth')) return null
 
   const isActive = (path: string) => pathname?.startsWith(path)
 
   const handleSignOut = async () => {
     setDropOpen(false)
     await supabase.auth.signOut()
-    router.push('/')
+    router.push('/auth/login')
     router.refresh()
   }
 
