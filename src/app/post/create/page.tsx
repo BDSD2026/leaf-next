@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Suspense } from 'react'
 import LeafLogo from '@/components/LeafLogo'
 import Image from 'next/image'
 
@@ -63,7 +64,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
   )
 }
 
-export default function CreatePostPage() {
+function CreatePostInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const supabase = createClient()
@@ -341,5 +342,13 @@ export default function CreatePostPage() {
         </form>
       </div>
     </div>
+  )
+}
+
+export default function CreatePostPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: 'calc(100vh - 56px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>}>
+      <CreatePostInner />
+    </Suspense>
   )
 }
