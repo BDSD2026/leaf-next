@@ -6,29 +6,71 @@ import { createClient } from '@/lib/supabase/client'
 import Avatar from '@/components/Avatar'
 import PostCard from '@/components/PostCard'
 
+async function searchGoogleBooks(query: string, supabase: any): Promise<any[]> {
+  try {
+    const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=10&langRestrict=en`
+    const res = await fetch(url)
+    if (!res.ok) return []
+    const data = await res.json()
+    const items = data.items || []
+    const books = items.map((item: any) => {
+      const info = item.volumeInfo || {}
+      return {
+        google_id: item.id,
+        title: info.title || 'Unknown Title',
+        author: (info.authors || ['Unknown']).join(', '),
+        authors: info.authors || [],
+        cover_url: info.imageLinks?.thumbnail?.replace('http:', 'https:') || null,
+        description: info.description?.slice(0, 500) || null,
+        genre: info.categories?.[0] || null,
+        categories: info.categories || [],
+        published_date: info.publishedDate || null,
+        publisher: info.publisher || null,
+        page_count: info.pageCount || null,
+        language: info.language || 'en',
+        insights_count: 0,
+      }
+    })
+    if (books.length > 0) {
+      await supabase.from('books').upsert(books, { onConflict: 'google_id', ignoreDuplicates: false })
+      const googleIds = books.map((b: any) => b.google_id)
+      const { data: saved } = await supabase.from('books').select('*').in('google_id', googleIds)
+      return saved || books
+    }
+    return books
+  } catch (e) {
+    console.error('Google Books error:', e)
+    return []
+  }
+}
+
 export default function SearchPage() {
   const [q, setQ] = useState('')
   const [tab, setTab] = useState('all')
-  const [results, setResults] = useState<any>({ posts: [], books: [], users: [] })
+  const [results, setResults] = useState<{ posts: any[]; books: any[]; users: any[] }>({ posts: [], books: [], users: [] })
   const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
   const search = useCallback(async (query: string) => {
     if (query.length < 2) { setResults({ posts: [], books: [], users: [] }); return }
     setLoading(true)
-    const [{ data: posts }, { data: books }, { data: users }] = await Promise.all([
+    const [{ data: posts }, { data: dbBooks }, { data: users }, googleBooks] = await Promise.all([
       supabase.from('posts_with_details').select('*').or(`text.ilike.%${query}%,subtext.ilike.%${query}%`).eq('is_deleted', false).limit(20),
-      supabase.from('books').select('*').or(`title.ilike.%${query}%,author.ilike.%${query}%`).limit(10),
+      supabase.from('books').select('*').or(`title.ilike.%${query}%,author.ilike.%${query}%`).order('insights_count', { ascending: false }).limit(10),
       supabase.from('profiles').select('*').or(`username.ilike.%${query}%,name.ilike.%${query}%`).limit(10),
+      searchGoogleBooks(query, supabase),
     ])
-    setResults({ posts: posts || [], books: books || [], users: users || [] })
+    const dbGoogleIds = new Set((dbBooks || []).map((b: any) => b.google_id))
+    const newFromGoogle = googleBooks.filter((b: any) => !dbGoogleIds.has(b.google_id))
+    const mergedBooks = [...(dbBooks || []), ...newFromGoogle].slice(0, 12)
+    setResults({ posts: posts || [], books: mergedBooks, users: users || [] })
     setLoading(false)
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQ(e.target.value)
     clearTimeout((window as any).__searchTimer)
-    ;(window as any).__searchTimer = setTimeout(() => search(e.target.value), 300)
+    ;(window as any).__searchTimer = setTimeout(() => search(e.target.value), 400)
   }
 
   const has = q.length > 1
@@ -72,16 +114,28 @@ export default function SearchPage() {
       {has && !loading && (tab === 'all' || tab === 'books') && results.books.length > 0 && (
         <div style={{ marginBottom: 20 }}>
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Books</div>
-          {results.books.slice(0, showAll ? 3 : 50).map((b: any) => (
-            <Link key={b.id} href={`/book/${b.id}`} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--b1)', textDecoration: 'none' }}>
-              {b.cover_url && <Image src={b.cover_url} alt="" width={34} height={48} style={{ borderRadius: 5, objectFit: 'cover' }} />}
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--t1)' }}>{b.title}</div>
-                <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>{b.author} {b.genre ? `· ${b.genre}` : ''}</div>
-                <div style={{ fontSize: 11, color: 'var(--gr)', marginTop: 3 }}>{b.insights_count || 0} insights</div>
+          {results.books.slice(0, showAll ? 6 : 50).map((b: any) => (
+            <Link key={b.id || b.google_id} href={b.id ? `/book/${b.id}` : `/book/${b.google_id}`}
+              style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--b1)', textDecoration: 'none' }}>
+              {b.cover_url
+                ? <Image src={b.cover_url} alt="" width={40} height={56} style={{ borderRadius: 5, objectFit: 'cover', flexShrink: 0 }} />
+                : <div style={{ width: 40, height: 56, borderRadius: 5, background: 'var(--s3)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>📖</div>
+              }
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--t1)', lineHeight: 1.3 }}>{b.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--t2)', marginTop: 3 }}>{b.author}</div>
+                {b.genre && <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 3 }}>{b.genre}</div>}
+                <div style={{ fontSize: 11, color: 'var(--gr)', marginTop: 4 }}>{b.insights_count || 0} insights</div>
               </div>
             </Link>
           ))}
+        </div>
+      )}
+
+      {has && !loading && (tab === 'all' || tab === 'books') && results.books.length === 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Books</div>
+          <div className="empty"><div className="empty-text">No books found for "{q}"</div></div>
         </div>
       )}
 
