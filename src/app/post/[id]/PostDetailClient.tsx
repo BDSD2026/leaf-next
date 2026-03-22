@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import PageLayout from '@/components/PageLayout'
 import Avatar from '@/components/Avatar'
 
 const TYPE_STYLES: Record<string, { bg: string; color: string; label: string }> = {
@@ -104,5 +105,6 @@ export default function PostDetailClient({ post, comments: initComments, current
         </div>
       </div>
     </div>
+    </PageLayout>
   )
 }
