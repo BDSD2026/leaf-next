@@ -77,7 +77,7 @@ export default function FeedClient({ initialPosts, trendingBooks, currentUserId,
 
         <main className="main-content">
           <div style={{ padding: '18px 20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 16, overflowX: 'auto', paddingBottom: 2, scrollbarWidth: 'none' } as any}>
               <div style={{ display: 'flex', gap: 4, flex: 1, flexWrap: 'wrap' }}>
                 {FILTERS.map(([k, l]) => (
                   <button key={k} onClick={() => navigate(undefined, k)}
