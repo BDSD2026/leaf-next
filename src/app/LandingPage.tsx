@@ -16,7 +16,7 @@ export default function LandingPage() {
     <div style={{ background: '#0C0C0E', minHeight: '100vh', fontFamily: 'system-ui,sans-serif' }}>
 
       {/* NAV */}
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 48px', borderBottom: '1px solid #111113', position: 'sticky', top: 0, background: '#0C0C0E', zIndex: 100 }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px clamp(16px, 5vw, 48px)', borderBottom: '1px solid #111113', position: 'sticky', top: 0, background: '#0C0C0E', zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <LeafLogo size={24} />
           <span style={{ fontFamily: 'Georgia,serif', fontSize: 20, fontWeight: 700, color: '#F0EEE8', letterSpacing: '-.03em' }}>leaf</span>
@@ -39,17 +39,17 @@ export default function LandingPage() {
       </nav>
 
       {/* HERO */}
-      <div style={{ padding: '88px 48px 72px', textAlign: 'center', borderBottom: '1px solid #111113' }}>
+      <div style={{ padding: '64px clamp(16px, 5vw, 48px) 56px', textAlign: 'center', borderBottom: '1px solid #111113' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 28 }}>
           <div style={{ width: 32, height: 1, background: '#5CD4A4' }} />
           <span style={{ fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase', color: '#5CD4A4', fontWeight: 700 }}>A reading community</span>
           <div style={{ width: 32, height: 1, background: '#5CD4A4' }} />
         </div>
-        <h1 style={{ fontFamily: 'Georgia,serif', fontSize: 60, fontWeight: 700, color: '#F0EEE8', lineHeight: 1.05, letterSpacing: '-.04em', marginBottom: 0 }}>
+        <h1 style={{ fontFamily: 'Georgia,serif', fontSize: 'clamp(32px, 8vw, 60px)', fontWeight: 700, color: '#F0EEE8', lineHeight: 1.05, letterSpacing: '-.04em', marginBottom: 0 }}>
           Books change minds.<br /><span style={{ color: '#252528' }}>Most apps</span> don't.
         </h1>
         <div style={{ width: 48, height: 3, background: '#5CD4A4', borderRadius: 2, margin: '26px auto' }} />
-        <p style={{ maxWidth: 540, margin: '0 auto 16px', fontFamily: 'Georgia,serif', fontSize: 18, color: '#8F8D8A', lineHeight: 1.7, fontStyle: 'italic' }}>
+        <p style={{ maxWidth: 540, margin: '0 auto 16px', fontFamily: 'Georgia,serif', fontSize: 'clamp(14px, 3vw, 18px)', color: '#8F8D8A', lineHeight: 1.7, fontStyle: 'italic' }}>
           "All human wisdom is contained in these two words — wait and hope." The ideas in books deserve more than a star rating. They deserve a conversation.
         </p>
         <p style={{ maxWidth: 420, margin: '0 auto 44px', fontSize: 14, color: '#4E4D4C', lineHeight: 1.7 }}>
@@ -77,13 +77,13 @@ export default function LandingPage() {
       </div>
 
       {/* FEED PREVIEW */}
-      <div ref={feedRef} style={{ padding: '56px 48px', borderBottom: '1px solid #111113' }}>
+      <div ref={feedRef} style={{ padding: '40px clamp(16px, 5vw, 48px)', borderBottom: '1px solid #111113' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
           <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#5CD4A4' }} />
           <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.12em', color: '#8F8D8A' }}>From the feed</span>
           <span style={{ fontSize: 9, fontWeight: 700, color: '#5CD4A4', background: 'rgba(92,212,164,.1)', padding: '2px 8px', borderRadius: 20, marginLeft: 'auto' }}>Live</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
           {[
             { av: 'MV', avc: '#7C6FCD', name: 'Margaux V.', handle: '@margaux.v · 2h', badge: 'Insight', bc: 'rgba(92,212,164,.12)', tc: '#5CD4A4', italic: true, text: '"You do not rise to the level of your goals. You fall to the level of your systems."', book: 'Atomic Habits', author: 'James Clear', up: 284, cm: 12 },
             { av: 'TR', avc: '#C17F59', name: 'Theo N.', handle: '@theo_reads · 5h', badge: 'Question', bc: 'rgba(240,160,80,.12)', tc: '#F0A050', italic: false, text: 'If habits define us more than goals, how do you intentionally design the person you want to become?', book: 'Atomic Habits', author: 'James Clear', up: 142, cm: 8 },
@@ -108,11 +108,11 @@ export default function LandingPage() {
 
       {/* FEATURES */}
       <div ref={featuresRef} style={{ borderBottom: '1px solid #111113' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '40px 48px 28px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '32px clamp(16px, 5vw, 48px) 24px' }}>
           <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#5CD4A4' }} />
           <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.12em', color: '#8F8D8A' }}>Features</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 1, background: '#111113' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 1, background: '#111113' }}>
           {[
             { n: '01', title: 'Four ways to post', body: 'Insights, thoughts, questions, reviews — each post type has its own format. No one-size-fits-all text boxes.', tag: 'Insight · Thought · Question · Review', tc: '#5CD4A4', tbc: 'rgba(92,212,164,.1)' },
             { n: '02', title: 'Your shelf, your pace', body: 'Track reading, want-to-read, and finished books. Rate as you go. See what people you follow are reading.', tag: 'Reading · Finished · Want to read', tc: '#5B9CF6', tbc: 'rgba(91,156,246,.1)' },
@@ -129,12 +129,12 @@ export default function LandingPage() {
       </div>
 
       {/* COMMUNITY / MANIFESTO */}
-      <div ref={communityRef} style={{ padding: '72px 48px', borderBottom: '1px solid #111113', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center' }}>
+      <div ref={communityRef} style={{ padding: '48px clamp(16px, 5vw, 48px)', borderBottom: '1px solid #111113', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(24px, 4vw, 48px)', alignItems: 'center' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: '#4E4D4C', marginBottom: 20 }}>
             <div style={{ width: 24, height: 1, background: '#4E4D4C' }} /> Why leaf exists
           </div>
-          <h2 style={{ fontFamily: 'Georgia,serif', fontSize: 34, fontWeight: 700, color: '#F0EEE8', lineHeight: 1.2, marginBottom: 16 }}>
+          <h2 style={{ fontFamily: 'Georgia,serif', fontSize: 'clamp(22px, 5vw, 34px)', fontWeight: 700, color: '#F0EEE8', lineHeight: 1.2, marginBottom: 16 }}>
             Reading is thinking.<br />leaf is where<br /><em style={{ color: '#5CD4A4' }}>thinkers read together.</em>
           </h2>
           <p style={{ fontSize: 14, color: '#8F8D8A', lineHeight: 1.75, marginBottom: 28 }}>
@@ -159,7 +159,7 @@ export default function LandingPage() {
       </div>
 
       {/* JOIN STRIP */}
-      <div ref={joinRef} style={{ background: '#111113', borderTop: '1px solid #131315', padding: '48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
+      <div ref={joinRef} style={{ background: '#111113', borderTop: '1px solid #131315', padding: 'clamp(24px, 5vw, 48px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
         <div>
           <h3 style={{ fontFamily: 'Georgia,serif', fontSize: 24, color: '#F0EEE8', marginBottom: 6 }}>Ready to read differently?</h3>
           <p style={{ fontSize: 14, color: '#8F8D8A' }}>Join thousands of readers sharing what they learn from books.</p>
@@ -171,7 +171,7 @@ export default function LandingPage() {
       </div>
 
       {/* FOOTER */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 48px', borderTop: '1px solid #0F0F11' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px clamp(16px, 5vw, 48px)', borderTop: '1px solid #0F0F11' }}>
         <span style={{ fontFamily: 'Georgia,serif', fontSize: 15, color: '#4E4D4C' }}>leaf</span>
         <span style={{ fontSize: 11, color: '#252528' }}>A place to discuss what people learned from books.</span>
         <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ background: 'none', border: 'none', fontSize: 11, color: '#4E4D4C', cursor: 'pointer' }}>Back to top ↑</button>
